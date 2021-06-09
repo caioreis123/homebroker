@@ -10,6 +10,7 @@
 // cada nó da lista ligada composta pela struct operaçao contém a próxima operação, a quantidade e o valor.
 
 
+#define TAM 10
 typedef struct Operacao{
     struct Operacao* proximaOperacao;
     int quantidade;
@@ -22,8 +23,8 @@ typedef struct Titulo{
     Operacao primeiraVenda;
 }Titulo;
 
-Titulo arrayList[3];
-int tamanhoArrayList = 3;
+Titulo arrayList[TAM];
+int tamanhoArrayList = TAM;
 int inseridosArrayList = 0;
 
 char identificaTipo(){
@@ -69,54 +70,58 @@ void IncluirOferta() {
 
 void carregarOfertasDeArquivo(){
     //essas variáveis são temporárias e serão removidas em breve
-    char sigla[10];
-    char tipo[10];
-    char valor[10];
-    char quantidade[10];
-    char texto[10];
+    char *sigla;
+    char *tipo;
+    double valor;
+    long int quantidade;
 
-
-    FILE *file = fopen("../homebroker-database.csv", "r");
-    if (!file){
-        file = fopen("homebroker-database.csv", "r");
-        if(!file){
+    FILE *arquivo = fopen("../homebroker-database.csv", "r");
+    if (!arquivo){
+        arquivo = fopen("homebroker-database.csv", "r");
+        if(!arquivo){
             printf("nao foi possivel ler o arquivo\n");
             exit(1);
         }
     }
-    char buff[1024];
-    int row_count = 0;
-    int field_count = 0;
-    int i=0;
-    while(fgets(buff, 1024, file)){
-        field_count = 0;
-        row_count++;
-        if(row_count == 1) continue;
-        char *field = strtok(buff, ",");
-        while(field){
-            if(field_count == 0) {
-                strcpy(sigla, field);
-                printf("sigla: %s\n", sigla);
-            }
-            if(field_count == 1){
-                strcpy(tipo, field);
-                printf("tipo: %s\n", tipo);
-            }
-            if(field_count == 2) {
-                strcpy(valor, field);
-                printf("valor: %s\n", valor);
-            }
-            if(field_count == 3) {
-                strcpy(quantidade, field);
-                printf("quantidade: %s\n", quantidade);
-            }
-            field = strtok(NULL, ",");
-            field_count++;
-        }
-        i++;
-    }
+    char linhas[1024];
 
-    fclose(file);
+    // o número de linha serve apenas para que possamos pular a primeira linha contendo apenas os nomes das colunas
+    int linha_atual = 0;
+
+    // o número da coluna vai ajudar a identificar em qual variável deveremos armazenar o conteúdo em texto de uma célula
+    int coluna_atual = 0;
+
+    // iteramos pelas linhas de um arquivo
+    while(fgets(linhas, 1024, arquivo)){
+        coluna_atual = 0;
+        linha_atual++;
+        if(linha_atual == 1) continue;
+
+        // célula é o conteúdo em texto da célula
+        char *celula = strtok(linhas, ",");
+
+        // iteramos pelas células de uma linha, atribuindo seus conteúdo às respectivas variáveis
+        while(celula){
+            if(coluna_atual == 0){
+                sigla = celula;
+            }
+            if(coluna_atual == 1){
+                tipo = celula;
+            }
+            if(coluna_atual == 2){
+                valor = strtod(celula, NULL);
+            }
+            if(coluna_atual == 3) {
+                quantidade = strtol(celula, NULL, 10);
+            }
+          // a passagem do NULL no strtok vai avançar para a próxima célula
+            celula = strtok(NULL, ",");
+            coluna_atual++;
+        }
+        printf("%s %s %f %ld \n", sigla, tipo, valor, quantidade);
+//        salvarOferta(sigla, tipo, valor, quantidade);
+    }
+    fclose(arquivo);
 }
 
 int main() {
