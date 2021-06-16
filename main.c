@@ -6,21 +6,25 @@
 
 #define TAMANHO_INICIAL 10
 
+//explicar o mercado de ação compra e venda
+//explicar funcionando, como se fosse um usuário
+//mostrar o código funcionando
+
 // a estrutura principal será um listaDinamicaPrincipal, ou seja, um array com alocação dinâmica de memória capaz de aumentar de tamanho
 // assim que seu último elemento for adicionado. Usa-se realoc para isso. Cada elemento desse listaDinamicaPrincipal contém uma struct titulos
 // que por sua vez contém a sigla do título (ex: PETR4), e dois cabeçotes, um pra cada tipo de operação, ou seja, aponta para o nó inicial
 // de uma lista ligada com as operações de compra/venda
 // cada nó da lista ligada composta pela struct operaçao contém a próxima operação, a quantidade e o valor.
 typedef struct NohOperacao{
-    struct NohOperacao* nohOperacaoAnterior;
+    struct NohOperacao *nohOperacaoSeguinte;
     char quantidade[10]; // tudo vai ser armazenado como string até o momento de fazer as operações matemática, a partir daí fazemos as conversões e desconversões
     char valor[10];
 }NohOperacao;
 
 typedef struct Titulo{
     char sigla[10]; // const char* é utilizado para que a string possa ser retornada de uma função
-    NohOperacao ultimaCompra;
-    NohOperacao ultimaVenda;
+    NohOperacao primeiraCompra;
+    NohOperacao primeiraVenda;
 }Titulo;
 
 //  é nossa variável global básica acessada por toda a aplicação e que é dinâmica e contém os títulos
@@ -39,36 +43,56 @@ Titulo *buscaTitulo(char *sigla, int iterador) {
 }
 
 void salvarOferta(char *sigla, const char *tipo, char *valor, char *quantidade){
+    int tituloExistente = 0;
     // tentativa 2:
 //    Titulo *tituloExistente = buscaTitulo(sigla, 0);
+    for(int i = 0; i<espacoPrincipalUtilizado;i++){
+        if(!strcmp(sigla, listaDinamicaPrincipal[i].sigla)){ //se a sigla já existe
+            tituloExistente = 1;
+            if(tipo[0]=='c'){
+                NohOperacao *novaCompra;
+                novaCompra = malloc(sizeof (NohOperacao));
+//                NohOperacao novaCompra;
+                novaCompra->nohOperacaoSeguinte = NULL;
+                strcpy(novaCompra->valor, valor);
+//                strcpy(listaDinamicaPrincipal[i].primeiraCompra.nohOperacaoSeguinte->valor, valor);
+                strcpy(novaCompra->quantidade, quantidade);
+//                strcpy(listaDinamicaPrincipal[i].primeiraCompra.nohOperacaoSeguinte->quantidade, quantidade);
+                listaDinamicaPrincipal[i].primeiraCompra.nohOperacaoSeguinte = novaCompra;
+//                listaDinamicaPrincipal[i].primeiraCompra.nohOperacaoSeguinte->nohOperacaoSeguinte = NULL;
+                printf("teste");
+            }
+        }
+    }
+
 //    if(tituloExistente && tipo[0]=='c'){
 //        NohOperacao novaCompra;
-//        novaCompra.quantidade = quantidade;
-//        novaCompra.valor = valor;
-//        novaCompra.nohOperacaoAnterior = &tituloExistente->ultimaCompra;
-//        tituloExistente->ultimaCompra = novaCompra;
+//        strcpy(novaCompra.quantidade, quantidade);
+//        strcpy(novaCompra.valor, valor);
+//        novaCompra.nohOperacaoSeguinte = &tituloExistente->primeiraCompra;
+//        tituloExistente->primeiraCompra = novaCompra;
 //    }
 //    if(tituloExistente && tipo[0]=='v'){
 //        NohOperacao novaVenda;
 //        novaVenda.quantidade = quantidade;
 //        novaVenda.valor = valor;
-//        novaVenda.nohOperacaoAnterior = &tituloExistente->ultimaVenda;
-//        tituloExistente->ultimaVenda = novaVenda;
+//        novaVenda.nohOperacaoSeguinte = &tituloExistente->primeiraVenda;
+//        tituloExistente->primeiraVenda = novaVenda;
 //    }
-//    if(!tituloExistente){
+    if(!tituloExistente){
         strcpy(listaDinamicaPrincipal[espacoPrincipalUtilizado].sigla, sigla); // os valores que estou recebendo como argumentos estão mudando, então as atribuições ficam todas erradas, é preciso usar strcpy para funcionar
         if(tipo[0]=='c'){
-            strcpy(listaDinamicaPrincipal[espacoPrincipalUtilizado].ultimaCompra.quantidade,quantidade);
-            strcpy(listaDinamicaPrincipal[espacoPrincipalUtilizado].ultimaCompra.valor,valor);
-            listaDinamicaPrincipal[espacoPrincipalUtilizado].ultimaCompra.nohOperacaoAnterior = NULL;
+            strcpy(listaDinamicaPrincipal[espacoPrincipalUtilizado].primeiraCompra.quantidade, quantidade);
+            strcpy(listaDinamicaPrincipal[espacoPrincipalUtilizado].primeiraCompra.valor, valor);
+            listaDinamicaPrincipal[espacoPrincipalUtilizado].primeiraCompra.nohOperacaoSeguinte = NULL;
         }
         if(tipo[0]=='v'){
-            strcpy(listaDinamicaPrincipal[espacoPrincipalUtilizado].ultimaVenda.quantidade,quantidade);
-            strcpy(listaDinamicaPrincipal[espacoPrincipalUtilizado].ultimaVenda.valor,valor);
-            listaDinamicaPrincipal[espacoPrincipalUtilizado].ultimaVenda.nohOperacaoAnterior = NULL;
+            strcpy(listaDinamicaPrincipal[espacoPrincipalUtilizado].primeiraVenda.quantidade, quantidade);
+            strcpy(listaDinamicaPrincipal[espacoPrincipalUtilizado].primeiraVenda.valor, valor);
+            listaDinamicaPrincipal[espacoPrincipalUtilizado].primeiraVenda.nohOperacaoSeguinte = NULL;
         }
         espacoPrincipalUtilizado = espacoPrincipalUtilizado + 1;
-//    }
+    }
 
 
 
@@ -84,14 +108,14 @@ void salvarOferta(char *sigla, const char *tipo, char *valor, char *quantidade){
 //           if(tolower(tipo[0])=='c'){
 //               novaOperacao.valor = valor;
 //               novaOperacao.quantidade = quantidade;
-//               novaOperacao.nohOperacaoAnterior = &listaDinamicaPrincipal[iterador].ultimaCompra; // bota a nova operação para apontar para a última operação daquele tipo (c ou v) adicionada anteriormente
-//               listaDinamicaPrincipal[iterador].ultimaCompra = novaOperacao; // atualiza a última operação daquele título para ser a nova operação
+//               novaOperacao.nohOperacaoSeguinte = &listaDinamicaPrincipal[iterador].primeiraCompra; // bota a nova operação para apontar para a última operação daquele tipo (c ou v) adicionada anteriormente
+//               listaDinamicaPrincipal[iterador].primeiraCompra = novaOperacao; // atualiza a última operação daquele título para ser a nova operação
 //           }
 //           else{
 //               novaOperacao.valor = valor;
 //               novaOperacao.quantidade = quantidade;
-//               novaOperacao.nohOperacaoAnterior = &listaDinamicaPrincipal[iterador].ultimaVenda;
-//               listaDinamicaPrincipal[iterador].ultimaVenda = novaOperacao;
+//               novaOperacao.nohOperacaoSeguinte = &listaDinamicaPrincipal[iterador].primeiraVenda;
+//               listaDinamicaPrincipal[iterador].primeiraVenda = novaOperacao;
 //           }
 //       }
 //   }
@@ -108,16 +132,16 @@ void salvarOferta(char *sigla, const char *tipo, char *valor, char *quantidade){
 ////      a criação do título envolve além da adição da sigla, a adição da última operação para cada tipo, daí inserimos como última operação a nova operação
 //        Titulo novoTitulo;
 //        novoTitulo.sigla = sigla;
-//        novaOperacao.nohOperacaoAnterior = NULL;
+//        novaOperacao.nohOperacaoSeguinte = NULL;
 //        if(tolower(tipo[0])=='c'){
 //            novaOperacao.valor = valor;
 //            novaOperacao.quantidade = quantidade;
-//            novoTitulo.ultimaCompra = novaOperacao;
+//            novoTitulo.primeiraCompra = novaOperacao;
 //        }
 //        else{
 //            novaOperacao.valor = valor;
 //            novaOperacao.quantidade = quantidade;
-//            novoTitulo.ultimaVenda = novaOperacao;
+//            novoTitulo.primeiraVenda = novaOperacao;
 //        }
 //
 ////      ao final depois do título já montado precisamos apenas adicionar ele na nossa estrutura principal
@@ -125,68 +149,22 @@ void salvarOferta(char *sigla, const char *tipo, char *valor, char *quantidade){
 //    }
 }
 
-//char identificaTipo(){
-//    char tipo;
-//    printf("digite se [c]ompra ou [v]enda \n");
-//    scanf("%c", &tipo);
-//    return tipo;
-//}
+void listarOfertas(){
+    for(int i = 0; i < espacoPrincipalUtilizado; i++){
+        printf("Sigla: %s\n", listaDinamicaPrincipal[i].sigla);
+        printf("Compras:\n");
+        while(listaDinamicaPrincipal[i].primeiraCompra.nohOperacaoSeguinte != NULL){
+            printf(" valor: %s, quantidade: %s\n", listaDinamicaPrincipal[i].primeiraCompra.valor, listaDinamicaPrincipal[i].primeiraCompra.quantidade);
+            listaDinamicaPrincipal[i].primeiraCompra.nohOperacaoSeguinte = listaDinamicaPrincipal[i].primeiraCompra.nohOperacaoSeguinte->nohOperacaoSeguinte;
+        }
 
-//const char *identificaSigla() {
-//    return "PETR4";
-//}
-//
-//int identificaQuantidade() {
-//    return 42;
-//}
-//
-//double identificaValor() {
-//    return 51.32;
-//}
-
-void inserirOfertaDoUsuario() {
-//    vai pegar os valores do usuário com uma funçao pegar valores do usuário que retorna uma array de strings
-//    e depois passar esses valores para a salvarOferta
-
-
-//    const char* sigla = identificaSigla();
-//    char tipo = identificaTipo();
-//    int quantidade = identificaQuantidade();
-//    double valor = identificaValor();
-//    NohOperacao operacao = {
-//            .quantidade = "30",
-//            .valor = "51.09",
-//    };
-//    Titulo titulo = {
-//            .sigla= "PETR4",
-//    };
-//    if (tipo == 'c'){
-//       titulo.ultimaCompra = operacao;
-//    }
-//    else{
-//       titulo.ultimaVenda = operacao;
-//    }
-//    listaDinamicaPrincipal[0] = titulo;
-//    printf(" %s %s  %s\n", listaDinamicaPrincipal[0].sigla, listaDinamicaPrincipal[0].ultimaCompra.quantidade, listaDinamicaPrincipal[0].ultimaCompra.valor);
-}
-
-
-//void listarOfertas(){
-//    for(int iterador = 0; iterador < espacoPrincipalUtilizado; iterador++){
-//        printf("Sigla: %s\n", listaDinamicaPrincipal[iterador].sigla);
-//        printf("Compras:\n");
-//        while(listaDinamicaPrincipal[iterador].ultimaCompra.nohOperacaoAnterior!=NULL){
-//            printf(" valor: %s, quantidade: %s\n", listaDinamicaPrincipal[iterador].ultimaCompra.valor, listaDinamicaPrincipal[iterador].ultimaCompra.quantidade);
-//            listaDinamicaPrincipal[iterador].ultimaCompra.nohOperacaoAnterior = listaDinamicaPrincipal[iterador].ultimaCompra.nohOperacaoAnterior->nohOperacaoAnterior;
-//        }
-//
 //        printf("Vendas:\n");
-//        while(listaDinamicaPrincipal[iterador].ultimaVenda.nohOperacaoAnterior!=NULL){
-//            printf(" valor: %s, quantidade: %s\n", listaDinamicaPrincipal[iterador].ultimaVenda.valor, listaDinamicaPrincipal[iterador].ultimaVenda.quantidade);
-//            listaDinamicaPrincipal[iterador].ultimaVenda.nohOperacaoAnterior = listaDinamicaPrincipal[iterador].ultimaVenda.nohOperacaoAnterior->nohOperacaoAnterior;
+//        while(listaDinamicaPrincipal[i].primeiraVenda.nohOperacaoSeguinte!=NULL){
+//            printf(" valor: %s, quantidade: %s\n", listaDinamicaPrincipal[i].primeiraVenda.valor, listaDinamicaPrincipal[i].primeiraVenda.quantidade);
+//            listaDinamicaPrincipal[i].primeiraVenda.nohOperacaoSeguinte = listaDinamicaPrincipal[i].primeiraVenda.nohOperacaoSeguinte->nohOperacaoSeguinte;
 //        }
-//    }
-//}
+    }
+}
 
 
 void carregarOfertasDeArquivo(){
@@ -196,9 +174,9 @@ void carregarOfertasDeArquivo(){
     char *valor;
     char *quantidade;
 
-    FILE *arquivo = fopen("../homebroker-database.csv", "r");
+    FILE *arquivo = fopen("../homebroker-database.txt", "r");
     if (!arquivo){
-        arquivo = fopen("homebroker-database.csv", "r");
+        arquivo = fopen("homebroker-database.txt", "r");
         if(!arquivo){
             printf("Nao foi possivel ler o arquivo\n");
             exit(1);
@@ -259,9 +237,9 @@ void exibirMenu() {
 int main() {
     listaDinamicaPrincipal = (Titulo *) malloc(tamanhoDaListaPrincipal * sizeof(Titulo));
     carregarOfertasDeArquivo();
-    printf("sigla:%s\nqtd de compra:%s\nvalor compra:%s\nvalor venda:%s\nquantidade venda:%s\n",listaDinamicaPrincipal[0].sigla, listaDinamicaPrincipal[0].ultimaCompra.quantidade, listaDinamicaPrincipal[0].ultimaCompra.valor, listaDinamicaPrincipal[0].ultimaVenda.valor, listaDinamicaPrincipal[0].ultimaVenda.quantidade);
-    printf("sigla:%s\nqtd de compra:%s\nvalor compra:%s\nvalor venda:%s\nquantidade venda:%s\n",listaDinamicaPrincipal[1].sigla, listaDinamicaPrincipal[1].ultimaCompra.quantidade, listaDinamicaPrincipal[1].ultimaCompra.valor, listaDinamicaPrincipal[1].ultimaVenda.valor, listaDinamicaPrincipal[1].ultimaVenda.quantidade);
-//    listarOfertas();
+//    printf("sigla:%s\nqtd de compra:%s\nvalor compra:%s\nvalor venda:%s\nquantidade venda:%s\n",listaDinamicaPrincipal[0].sigla, listaDinamicaPrincipal[0].primeiraCompra.quantidade, listaDinamicaPrincipal[0].primeiraCompra.valor, listaDinamicaPrincipal[0].primeiraVenda.valor, listaDinamicaPrincipal[0].primeiraVenda.quantidade);
+//    printf("sigla:%s\nqtd de compra:%s\nvalor compra:%s\nvalor venda:%s\nquantidade venda:%s\n",listaDinamicaPrincipal[1].sigla, listaDinamicaPrincipal[1].primeiraCompra.quantidade, listaDinamicaPrincipal[1].primeiraCompra.valor, listaDinamicaPrincipal[1].primeiraVenda.valor, listaDinamicaPrincipal[1].primeiraVenda.quantidade);
+    listarOfertas();
 //    exibirMenu();
     free(listaDinamicaPrincipal);
     return 0;
