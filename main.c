@@ -186,6 +186,26 @@ void exibirMenu() {
 // 1. Inserir Oferta (vai chamar a função inserir oferta do usuário que tem vários prompts e depois chama a função salvarOferta)
 // 2. Listar Ofertas
 // 3. Sair
+int opcao;
+    while(1) {
+        printf("\n**************");
+        printf("\nDigite um dos numeros:\n");
+        printf("[1] Listar operacoes:\n");
+        printf("[2] Inserir operacoes:\n");
+        printf("[0] Sair:\n");
+        scanf("%d", &opcao);
+        switch (opcao) {
+            case 1:
+                listarOfertas();
+                break;
+            case 2:
+                printf("Falta implementar");
+                break;
+            default:
+                printf("\nSaindo...");
+                exit(0);
+        }
+    }
 }
 
 
@@ -193,8 +213,8 @@ void exibirMenu() {
 int main() {
     listaDinamicaPrincipal = (Titulo *) malloc(tamanhoDaListaPrincipal * sizeof(Titulo));
     carregarOfertasDeArquivo();
-    listarOfertas();
-//    exibirMenu();
+//    listarOfertas();
+    exibirMenu();
     free(listaDinamicaPrincipal);
     return 0;
 }
