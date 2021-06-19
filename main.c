@@ -97,12 +97,12 @@ void salvarOferta(char *sigla, const char *tipo, char *valor, char *quantidade) 
     if (indiceDaListaPrincipalDaSigla == -1) {
         indiceDaListaPrincipalDaSigla = inserirNovoTituloAoFinalDaListaPrincipal(sigla);
     }
-    if (tipo[0] == 'c') {
+    if (tolower(tipo[0]) == 'c') {
         Operacao *primeiraCompra = inserirOperacaoNoInicio(
         listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].primeiraCompra, quantidade, valor);
         listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].primeiraCompra = primeiraCompra;
 
-    } else if (tipo[0] == 'v') {
+    } else if (tolower(tipo[0]) == 'v') {
         Operacao *primeiraVenda = inserirOperacaoNoInicio(
         listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].primeiraVenda, quantidade, valor);
         listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].primeiraVenda = primeiraVenda;
@@ -181,6 +181,23 @@ void carregarOfertasDeArquivo(){
     fclose(arquivo);
 }
 
+void inserirOperacaoDoUsuario() {
+    char sigla[10];
+    char tipo[10];
+    char valor[10];
+    char quantidade[10];
+    printf("\nQual a sigla do Titulo?");
+    scanf("%s", sigla);
+    printf("\nQual o tipo de operacao que deseja realizar? [compra]/[venda]");
+    scanf("%s", tipo);
+    printf("\nQual o valor unitário?");
+    scanf("%s", valor);
+    printf("\nQual a quantidade que deseja operar?");
+    scanf("%s", quantidade);
+    printf("Valores lidos: %s %s %s %s", sigla, tipo, valor, quantidade);
+    salvarOferta(sigla, tipo, valor, quantidade);
+}
+
 void exibirMenu() {
 //    vai exibir as seguintes opções para o usuário
 // 1. Inserir Oferta (vai chamar a função inserir oferta do usuário que tem vários prompts e depois chama a função salvarOferta)
@@ -199,10 +216,11 @@ int opcao;
                 listarOfertas();
                 break;
             case 2:
-                printf("Falta implementar");
+                inserirOperacaoDoUsuario();
                 break;
             default:
                 printf("\nSaindo...");
+                free(listaDinamicaPrincipal);
                 exit(0);
         }
     }
@@ -213,8 +231,6 @@ int opcao;
 int main() {
     listaDinamicaPrincipal = (Titulo *) malloc(tamanhoDaListaPrincipal * sizeof(Titulo));
     carregarOfertasDeArquivo();
-//    listarOfertas();
     exibirMenu();
-    free(listaDinamicaPrincipal);
     return 0;
 }
