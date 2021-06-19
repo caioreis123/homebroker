@@ -106,7 +106,7 @@ void salvarOferta(char *sigla, const char *tipo, char *valor, char *quantidade) 
         Operacao *primeiraVenda = inserirOperacaoNoInicio(
         listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].primeiraVenda, quantidade, valor);
         listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].primeiraVenda = primeiraVenda;
-    } else printf("%s precisa sem compra ou venda", listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].sigla);
+    } else printf("%s precisa ser compra ou venda", listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].sigla);
 }
 
 void listarOfertas(){
@@ -186,16 +186,89 @@ void inserirOperacaoDoUsuario() {
     char tipo[10];
     char valor[10];
     char quantidade[10];
-    printf("\nQual a sigla do Titulo?");
+    printf("\nQual a sigla do Titulo?\n");
     scanf("%s", sigla);
-    printf("\nQual o tipo de operacao que deseja realizar? [compra]/[venda]");
+    printf("\nQual o tipo de operacao que deseja realizar? [compra]/[venda]\n");
     scanf("%s", tipo);
-    printf("\nQual o valor unitário?");
+    printf("\nQual o valor unitário?\n");
     scanf("%s", valor);
-    printf("\nQual a quantidade que deseja operar?");
+    printf("\nQual a quantidade que deseja operar?\n");
     scanf("%s", quantidade);
     printf("Valores lidos: %s %s %s %s", sigla, tipo, valor, quantidade);
     salvarOferta(sigla, tipo, valor, quantidade);
+}
+
+int pegaValorDaOperacao(Operacao *operacao) {
+    if (!operacao) return 0;
+    return atoi(operacao->valor);
+}
+
+Operacao* removeOperacao(Operacao *operacaoASerRemovida, Operacao *primeiraOperacao) {
+    Operacao *operacaoAtual = primeiraOperacao;
+    if(primeiraOperacao->valor==operacaoASerRemovida->valor && primeiraOperacao->quantidade==operacaoASerRemovida->quantidade){
+        primeiraOperacao = primeiraOperacao->proxima;
+        return primeiraOperacao;
+    }
+    else{
+        while(operacaoAtual){
+            if(operacaoAtual->proxima->valor == operacaoASerRemovida->valor && operacaoAtual->proxima->quantidade == operacaoASerRemovida->quantidade){
+                operacaoAtual->proxima = operacaoAtual->proxima->proxima;
+            }
+            operacaoAtual = operacaoAtual->proxima;
+        }
+    }
+
+}
+
+void realizarOperacao(Operacao *compra, Operacao *venda, int indice) {
+    int qtdCompra = atoi(compra->quantidade);
+    int qtdVenda = atoi(venda->quantidade);
+    char quantidadeAtualizada[10];
+    Operacao *primeiraCompraAtualizada;
+    Operacao *primeiraVendaAtualizada;
+    if(qtdCompra < qtdVenda){
+        sprintf(quantidadeAtualizada, "%d", qtdVenda - qtdCompra);
+        strcpy(venda->quantidade , quantidadeAtualizada);
+        primeiraCompraAtualizada = removeOperacao(compra, listaDinamicaPrincipal[indice].primeiraCompra);
+        listaDinamicaPrincipal[indice].primeiraCompra = primeiraCompraAtualizada;
+    }
+    if (qtdCompra > qtdVenda){
+        sprintf(quantidadeAtualizada, "%d", qtdCompra - qtdVenda);
+        strcpy(compra->quantidade , quantidadeAtualizada);
+        primeiraVendaAtualizada = removeOperacao(venda, listaDinamicaPrincipal[indice].primeiraVenda);
+        listaDinamicaPrincipal[indice].primeiraVenda = primeiraVendaAtualizada;
+    }
+    if(qtdCompra == qtdVenda){
+        primeiraVendaAtualizada = removeOperacao(venda, listaDinamicaPrincipal[indice].primeiraVenda);
+        primeiraCompraAtualizada = removeOperacao(compra, listaDinamicaPrincipal[indice].primeiraCompra);
+        listaDinamicaPrincipal[indice].primeiraCompra = primeiraCompraAtualizada;
+        listaDinamicaPrincipal[indice].primeiraVenda = primeiraVendaAtualizada;
+
+    }
+}
+
+void comparaPrecoDaCompraComTodasAsVendas(Operacao *compra, Operacao *venda, int indice) {
+    int valorDaCompra = pegaValorDaOperacao(compra);
+    Operacao *vendaAtual = venda;
+    while(vendaAtual){
+        if(atof(vendaAtual->valor) == valorDaCompra){
+            realizarOperacao(compra, venda, indice);
+        }
+        vendaAtual = vendaAtual->proxima;
+    }
+}
+
+void realizarOperacoes() {
+    for(int i=0; i<espacoPrincipalUtilizado; i++){
+        Operacao *compraAtual = listaDinamicaPrincipal[i].primeiraCompra;
+        while(compraAtual){
+            if(listaDinamicaPrincipal[i].primeiraVenda){
+                comparaPrecoDaCompraComTodasAsVendas(compraAtual, listaDinamicaPrincipal[i].primeiraVenda, i);
+            }
+            compraAtual = compraAtual->proxima;
+        }
+
+    }
 }
 
 void exibirMenu() {
@@ -217,6 +290,7 @@ int opcao;
                 break;
             case 2:
                 inserirOperacaoDoUsuario();
+                realizarOperacoes();
                 break;
             default:
                 printf("\nSaindo...");
@@ -231,6 +305,8 @@ int opcao;
 int main() {
     listaDinamicaPrincipal = (Titulo *) malloc(tamanhoDaListaPrincipal * sizeof(Titulo));
     carregarOfertasDeArquivo();
-    exibirMenu();
+    realizarOperacoes();
+    listarOfertas();
+//    exibirMenu();
     return 0;
 }
