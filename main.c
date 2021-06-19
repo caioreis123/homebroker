@@ -46,10 +46,6 @@ Operacao* inserirOperacaoNoInicio(Operacao* primeiraOperacao, char quantidade[10
         primeiraOperacao=novaOperacao;
         novaOperacao->proxima=NULL;
     }
-//    else{
-//        novaOperacao->proxima=primeiraOperacao;
-//        primeiraOperacao=novaOperacao;
-//    }
     else{
         if(atof(novaOperacao->valor) > atof(primeiraOperacao->valor)){
             novaOperacao->proxima = primeiraOperacao;
@@ -69,7 +65,7 @@ void listarOperacoes(Operacao* primeiraOperacao){
     Operacao *auxiliar=primeiraOperacao;
     while(auxiliar!=NULL){
         printf("valor: %s\n", auxiliar->valor);
-//        printf("quantidade: %s\n", auxiliar->quantidade);
+        printf("quantidade: %s\n", auxiliar->quantidade);
         auxiliar=auxiliar->proxima;
     }
 }
@@ -103,23 +99,24 @@ void salvarOferta(char *sigla, const char *tipo, char *valor, char *quantidade) 
     }
     if (tipo[0] == 'c') {
         Operacao *primeiraCompra = inserirOperacaoNoInicio(
-                listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].primeiraCompra, quantidade, valor);
+        listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].primeiraCompra, quantidade, valor);
         listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].primeiraCompra = primeiraCompra;
 
     } else if (tipo[0] == 'v') {
         Operacao *primeiraVenda = inserirOperacaoNoInicio(
-                listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].primeiraVenda, quantidade, valor);
+        listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].primeiraVenda, quantidade, valor);
         listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].primeiraVenda = primeiraVenda;
     } else printf("%s precisa sem compra ou venda", listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].sigla);
 }
 
 void listarOfertas(){
     for(int i = 0; i < espacoPrincipalUtilizado; i++){
-        printf("Sigla: %s", listaDinamicaPrincipal[i].sigla);
-        printf("Compras:");
+        printf("Sigla: %s\n", listaDinamicaPrincipal[i].sigla);
+        printf("Compras:\n");
         listarOperacoes(listaDinamicaPrincipal[i].primeiraCompra);
-        printf("Vendas:");
+        printf("\nVendas:\n");
         listarOperacoes(listaDinamicaPrincipal[i].primeiraVenda);
+        printf("\n###########\n");
     }
 }
 
@@ -198,6 +195,6 @@ int main() {
     carregarOfertasDeArquivo();
     listarOfertas();
 //    exibirMenu();
-//    free(listaDinamicaPrincipal);
+    free(listaDinamicaPrincipal);
     return 0;
 }
