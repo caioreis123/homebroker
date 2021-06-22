@@ -10,25 +10,25 @@
 //explicar funcionando, como se fosse um usuário
 //mostrar o código funcionando
 
-// a estrutura principal será um listaDinamicaPrincipal, ou seja, um array com alocação dinâmica de memória capaz de aumentar de tamanho
-// assim que seu último elemento for adicionado. Usa-se realoc para isso. Cada elemento desse listaDinamicaPrincipal contém uma struct titulos
-// que por sua vez contém a sigla do título (ex: PETR4), e dois cabeçotes, um pra cada tipo de operação, ou seja, aponta para o nó inicial
-// de uma lista ligada com as operações de compra/venda
-// cada nó da lista ligada composta pela struct operaçao contém a próxima operação, a quantidade e o valor.
+// a estrutura principal será uma listaDinamicaPrincipal, ou seja, um array com alocação dinâmica de memória capaz de aumentar de tamanho
+// assim que seu último elemento for adicionado. Usa-se realoc para dobrar seu tamanho. Cada elemento desse listaDinamicaPrincipal contém uma struct titulos
+// que por sua vez contém a sigla do título (ex: PETR4), e dois cabeçotes de lista ligada, um pra cada lista que armazena todas as operações daquele tipo
+// cada nó dessa lista ligada é composta pela struct operaçao que contém a próxima operação, a quantidade e o valor da operação.
 typedef struct operacao{
     struct operacao *proxima;
-    char quantidade[10]; // tudo vai ser armazenado como string até o momento de fazer as operações matemática, a partir daí fazemos as conversões e desconversões
+    // tudo vai ser armazenado como string até o momento de fazer as operações matemáticas
+    char quantidade[10];
     char valor[10];
 }Operacao;
 
 typedef struct Titulo{
-    char sigla[10]; // const char* é utilizado para que a string possa ser retornada de uma função
+    char sigla[10];
     Operacao *primeiraCompra;
     Operacao *primeiraVenda;
 }Titulo;
 
-//  é nossa variável global básica acessada por toda a aplicação e que é dinâmica e contém os títulos
-Titulo *listaDinamicaPrincipal;
+Titulo *listaDinamicaPrincipal; // armazena todos os títulos, aumentando de tamanho sempre que o espaço da array acaba
+// essas 2 variáveis globais são usadas pela função de redimensionamento da array principal
 int tamanhoDaListaPrincipal = TAMANHO_INICIAL;
 int espacoPrincipalUtilizado = 0;
 
@@ -79,14 +79,12 @@ int buscaIndicePorSigla(char *sigla) {
 
 int inserirNovoTituloAoFinalDaListaPrincipal(char *sigla) {
     if(tamanhoDaListaPrincipal<=espacoPrincipalUtilizado){
-            tamanhoDaListaPrincipal = tamanhoDaListaPrincipal * 2;
-            listaDinamicaPrincipal = (Titulo *) realloc(listaDinamicaPrincipal, tamanhoDaListaPrincipal * sizeof(Titulo) );
+        tamanhoDaListaPrincipal = tamanhoDaListaPrincipal * 2;
+        listaDinamicaPrincipal = (Titulo *) realloc(listaDinamicaPrincipal, tamanhoDaListaPrincipal * sizeof(Titulo) );
     }
     strcpy(listaDinamicaPrincipal[espacoPrincipalUtilizado].sigla, sigla);
-    Operacao* primeiraCompra=NULL;
-    Operacao* primeiraVenda=NULL;
-    listaDinamicaPrincipal[espacoPrincipalUtilizado].primeiraCompra = primeiraCompra;
-    listaDinamicaPrincipal[espacoPrincipalUtilizado].primeiraVenda = primeiraVenda;
+    listaDinamicaPrincipal[espacoPrincipalUtilizado].primeiraCompra = NULL;
+    listaDinamicaPrincipal[espacoPrincipalUtilizado].primeiraVenda = NULL;
     espacoPrincipalUtilizado = espacoPrincipalUtilizado +1;
     int indiceDaNovaSigla = espacoPrincipalUtilizado -1;
     return indiceDaNovaSigla;
@@ -98,13 +96,11 @@ void salvarOferta(char *sigla, const char *tipo, char *valor, char *quantidade) 
         indiceDaListaPrincipalDaSigla = inserirNovoTituloAoFinalDaListaPrincipal(sigla);
     }
     if (tolower(tipo[0]) == 'c') {
-        Operacao *primeiraCompra = inserirOperacaoNoInicio(
-        listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].primeiraCompra, quantidade, valor);
+        Operacao *primeiraCompra = inserirOperacaoNoInicio(listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].primeiraCompra, quantidade, valor);
         listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].primeiraCompra = primeiraCompra;
 
     } else if (tolower(tipo[0]) == 'v') {
-        Operacao *primeiraVenda = inserirOperacaoNoInicio(
-        listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].primeiraVenda, quantidade, valor);
+        Operacao *primeiraVenda = inserirOperacaoNoInicio(listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].primeiraVenda, quantidade, valor);
         listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].primeiraVenda = primeiraVenda;
     } else printf("%s precisa ser compra ou venda", listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].sigla);
 }
@@ -122,7 +118,6 @@ void listarOfertas(){
 
 
 void carregarOfertasDeArquivo(){
-    //essas variáveis são temporárias e serão removidas em breve
     char *sigla;
     char *tipo;
     char *valor;
@@ -175,7 +170,6 @@ void carregarOfertasDeArquivo(){
             celula = strtok(NULL, ",");
             coluna_atual++;
         }
-//        printf("%s %s %s %s \n", sigla, tipo, valor, quantidade);
         salvarOferta(sigla, tipo, valor, quantidade);
     }
     fclose(arquivo);
@@ -217,33 +211,25 @@ Operacao* removeOperacao(Operacao *operacaoASerRemovida, Operacao *primeiraOpera
             operacaoAtual = operacaoAtual->proxima;
         }
     }
-
 }
 
 void realizarOperacao(Operacao *compra, Operacao *venda, int indice) {
     int qtdCompra = atoi(compra->quantidade);
     int qtdVenda = atoi(venda->quantidade);
     char quantidadeAtualizada[10];
-    Operacao *primeiraCompraAtualizada;
-    Operacao *primeiraVendaAtualizada;
     if(qtdCompra < qtdVenda){
         sprintf(quantidadeAtualizada, "%d", qtdVenda - qtdCompra);
         strcpy(venda->quantidade , quantidadeAtualizada);
-        primeiraCompraAtualizada = removeOperacao(compra, listaDinamicaPrincipal[indice].primeiraCompra);
-        listaDinamicaPrincipal[indice].primeiraCompra = primeiraCompraAtualizada;
+        listaDinamicaPrincipal[indice].primeiraCompra = removeOperacao(compra, listaDinamicaPrincipal[indice].primeiraCompra);
     }
     if (qtdCompra > qtdVenda){
         sprintf(quantidadeAtualizada, "%d", qtdCompra - qtdVenda);
         strcpy(compra->quantidade , quantidadeAtualizada);
-        primeiraVendaAtualizada = removeOperacao(venda, listaDinamicaPrincipal[indice].primeiraVenda);
-        listaDinamicaPrincipal[indice].primeiraVenda = primeiraVendaAtualizada;
+        listaDinamicaPrincipal[indice].primeiraVenda = removeOperacao(venda, listaDinamicaPrincipal[indice].primeiraVenda);
     }
     if(qtdCompra == qtdVenda){
-        primeiraVendaAtualizada = removeOperacao(venda, listaDinamicaPrincipal[indice].primeiraVenda);
-        primeiraCompraAtualizada = removeOperacao(compra, listaDinamicaPrincipal[indice].primeiraCompra);
-        listaDinamicaPrincipal[indice].primeiraCompra = primeiraCompraAtualizada;
-        listaDinamicaPrincipal[indice].primeiraVenda = primeiraVendaAtualizada;
-
+        listaDinamicaPrincipal[indice].primeiraCompra = removeOperacao(compra, listaDinamicaPrincipal[indice].primeiraCompra);
+        listaDinamicaPrincipal[indice].primeiraVenda = removeOperacao(venda, listaDinamicaPrincipal[indice].primeiraVenda);
     }
 }
 
@@ -272,10 +258,6 @@ void realizarOperacoes() {
 }
 
 void exibirMenu() {
-//    vai exibir as seguintes opções para o usuário
-// 1. Inserir Oferta (vai chamar a função inserir oferta do usuário que tem vários prompts e depois chama a função salvarOferta)
-// 2. Listar Ofertas
-// 3. Sair
 int opcao;
     while(1) {
         printf("\n**************");
@@ -305,8 +287,6 @@ int opcao;
 int main() {
     listaDinamicaPrincipal = (Titulo *) malloc(tamanhoDaListaPrincipal * sizeof(Titulo));
     carregarOfertasDeArquivo();
-    realizarOperacoes();
-    listarOfertas();
-//    exibirMenu();
+    exibirMenu();
     return 0;
 }
