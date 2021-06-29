@@ -5,17 +5,13 @@
 
 #define TAMANHO_INICIAL 10
 
-//explicar o mercado de ação compra e venda
-//explicar funcionando, como se fosse um usuário
-//mostrar o código funcionando
-
 // a estrutura principal será uma listaDinamicaPrincipal, ou seja, um array com alocação dinâmica de memória capaz de aumentar de tamanho
-// assim que seu último elemento for adicionado. Usa-se realoc para dobrar seu tamanho. Cada elemento desse listaDinamicaPrincipal contém uma struct titulos
-// que por sua vez contém a sigla do título (ex: PETR4), e dois cabeçotes de lista ligada, um pra cada lista que armazena todas as operações daquele tipo
-// cada nó dessa lista ligada é composta pela struct operaçao que contém a próxima operação, a quantidade e o valor da operação.
+// assim que seu último elemento for adicionado. Usa-se realoc para dobrar seu tamanho.
+
+// Cada elemento dessa listaDinamicaPrincipal contém uma struct titulos
+// que por sua vez contém a sigla do título (ex: PETR4), e dois cabeçotes de lista ligada, um pra cada tipo de operação
 typedef struct operacao{
     struct operacao *proxima;
-    // tudo vai ser armazenado como string até o momento de fazer as operações matemáticas
     char quantidade[10];
     char valor[10];
 }Operacao;
@@ -26,7 +22,7 @@ typedef struct Titulo{
     Operacao *primeiraVenda;
 }Titulo;
 
-Titulo *listaDinamicaPrincipal; // armazena todos os títulos, aumentando de tamanho sempre que o espaço da array acaba
+Titulo *listaDinamicaPrincipal;
 // essas 2 variáveis globais são usadas pela função de redimensionamento da array principal
 int tamanhoDaListaPrincipal = TAMANHO_INICIAL;
 int espacoPrincipalUtilizado = 0;
@@ -90,10 +86,14 @@ int inserirNovoTituloAoFinalDaListaPrincipal(char *sigla) {
 }
 
 void salvarOferta(char *sigla, const char *tipo, char *valor, char *quantidade) {
+//    primeiro passo: identificar qual o índice do array dinâmico principal está armazenado as operações do título a ser salvo
     int indiceDaListaPrincipalDaSigla = buscaIndicePorSigla(sigla);
+//    o retorno -1 indica que essa é uma nova sigla ainda não armazenada
     if (indiceDaListaPrincipalDaSigla == -1) {
         indiceDaListaPrincipalDaSigla = inserirNovoTituloAoFinalDaListaPrincipal(sigla);
     }
+
+//  as inserções de compra e venda retornam o cabeçote da lista correspondente, de modo que a estrutura principal possa ser atualizada com essa nova lista encadeada contendo a nova operação
     if (tolower(tipo[0]) == 'c') {
         Operacao *primeiraCompra = inserirOperacaoNoInicio(listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].primeiraCompra, quantidade, valor);
         listaDinamicaPrincipal[indiceDaListaPrincipalDaSigla].primeiraCompra = primeiraCompra;
@@ -107,9 +107,10 @@ void salvarOferta(char *sigla, const char *tipo, char *valor, char *quantidade) 
 void listarOfertas(){
     for(int i = 0; i < espacoPrincipalUtilizado; i++){
         printf("Sigla: %s\n", listaDinamicaPrincipal[i].sigla);
-        printf("Compras:\n");
+        printf("COMPRAS:\n");
         listarOperacoes(listaDinamicaPrincipal[i].primeiraCompra);
-        printf("\nVendas:\n");
+        printf("\n--------\n");
+        printf("\nVENDAS:\n");
         listarOperacoes(listaDinamicaPrincipal[i].primeiraVenda);
         printf("\n###########\n");
     }
@@ -122,6 +123,7 @@ void carregarOfertasDeArquivo(){
     char *valor;
     char *quantidade;
 
+    // esse duplo apontamento de caminho aqui é por conta do cmake que lê o arquivo a partir de outro diretório
     FILE *arquivo = fopen("../homebroker-database.txt", "r");
     if (!arquivo){
         arquivo = fopen("homebroker-database.txt", "r");
@@ -196,13 +198,17 @@ int pegaValorDaOperacao(Operacao *operacao) {
     return atoi(operacao->valor);
 }
 
-Operacao* removeOperacao(Operacao *operacaoASerRemovida, Operacao *primeiraOperacao) {
-    Operacao *operacaoAtual = primeiraOperacao;
+Operacao* removeOperacao(Operacao *operacaoASerRemovida, Operacao *primeiraOperacao){
+    //a operação a ser removida possui apenas valores e quantidade, por isso precisamos comparar ambos dados(valor e quantidade) de cada nó para garantir que estamos removendo o nó certo
+
+    // a remoção da primeira operação precisa de um tratamento especial porque iremos alterar o cabeçote da lista que passará a apontar para o segundo nó e retornar essa nova lista
     if(primeiraOperacao->valor==operacaoASerRemovida->valor && primeiraOperacao->quantidade==operacaoASerRemovida->quantidade){
         primeiraOperacao = primeiraOperacao->proxima;
         return primeiraOperacao;
     }
+    //para todos os outros casos em que não há remoção do cabeçote da lista vamos iterar sobre a lista e remover o nó fazendo o anterior dele apontar para o seguinte do seguinte
     else{
+        Operacao *operacaoAtual = primeiraOperacao;
         while(operacaoAtual){
             if(operacaoAtual->proxima->valor == operacaoASerRemovida->valor && operacaoAtual->proxima->quantidade == operacaoASerRemovida->quantidade){
                 operacaoAtual->proxima = operacaoAtual->proxima->proxima;
@@ -213,9 +219,12 @@ Operacao* removeOperacao(Operacao *operacaoASerRemovida, Operacao *primeiraOpera
 }
 
 void realizarOperacao(Operacao *compra, Operacao *venda, int indice) {
+    // primeiro converto as quantidades para inteiro para poder realizar as comparações
     int qtdCompra = atoi(compra->quantidade);
     int qtdVenda = atoi(venda->quantidade);
     char quantidadeAtualizada[10];
+
+    // três caminhos possíveis, um para cada resultado da comparação entre quantidades
     if(qtdCompra < qtdVenda){
         sprintf(quantidadeAtualizada, "%d", qtdVenda - qtdCompra);
         strcpy(venda->quantidade , quantidadeAtualizada);
@@ -244,10 +253,17 @@ void comparaPrecoDaCompraComTodasAsVendas(Operacao *compra, Operacao *venda, int
 }
 
 void realizarOperacoes() {
+//  essa função possui 3 laços de repetição aninhados responsáveis por comparar todas as compras com todas as vendas de todos os títulos
+
+//  o primeiro é esse for que itera sobre a lista principal
     for(int i=0; i<espacoPrincipalUtilizado; i++){
         Operacao *compraAtual = listaDinamicaPrincipal[i].primeiraCompra;
+
+//      o segundo é esse while itera sobre todas as compras de cada sigla presente em cada índice da lista principal
         while(compraAtual){
             if(listaDinamicaPrincipal[i].primeiraVenda){
+
+                //o terceiro está dentro dessa função que itera por todas as vendas de cada sigla
                 comparaPrecoDaCompraComTodasAsVendas(compraAtual, listaDinamicaPrincipal[i].primeiraVenda, i);
             }
             compraAtual = compraAtual->proxima;
@@ -274,13 +290,12 @@ int opcao;
                 realizarOperacoes();
                 break;
             default:
-                printf("\nSaindo...");
+                printf("\nObrigado por usar o homebroker! Me encontre nas redes sociais buscando por caioreis123");
                 free(listaDinamicaPrincipal);
                 exit(0);
         }
     }
 }
-
 
 
 int main() {
