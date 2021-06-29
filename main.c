@@ -287,11 +287,11 @@ int opcao;
         scanf("%d", &opcao);
         switch (opcao) {
             case 1:
+                realizarOperacoes();
                 listarOfertas();
                 break;
             case 2:
                 inserirOperacaoDoUsuario();
-                realizarOperacoes();
                 break;
             default:
                 printf("\nObrigado por usar o homebroker! Me encontre nas redes sociais buscando por caioreis123");
