@@ -72,11 +72,15 @@ int buscaIndicePorSigla(char *sigla) {
     return -1;
 }
 
-int inserirNovoTituloAoFinalDaListaPrincipal(char *sigla) {
-    if(tamanhoDaListaPrincipal<=espacoPrincipalUtilizado){
+void dobraTamanhoDaListaPrincipalSeNecessario() {
+    if(tamanhoDaListaPrincipal <= espacoPrincipalUtilizado){
         tamanhoDaListaPrincipal = tamanhoDaListaPrincipal * 2;
         listaDinamicaPrincipal = (Titulo *) realloc(listaDinamicaPrincipal, tamanhoDaListaPrincipal * sizeof(Titulo) );
     }
+}
+
+int inserirNovoTituloAoFinalDaListaPrincipal(char *sigla) {
+    dobraTamanhoDaListaPrincipalSeNecessario();
     strcpy(listaDinamicaPrincipal[espacoPrincipalUtilizado].sigla, sigla);
     listaDinamicaPrincipal[espacoPrincipalUtilizado].primeiraCompra = NULL;
     listaDinamicaPrincipal[espacoPrincipalUtilizado].primeiraVenda = NULL;
